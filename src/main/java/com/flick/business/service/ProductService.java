@@ -104,6 +104,18 @@ public class ProductService {
         return new PageResponse<>(productPage.map(ProductResponse::fromEntity));
     }
 
+    public BigDecimal calculateSuggestedPrice(BigDecimal costPrice, BigDecimal desiredProfitMargin) {
+    if (costPrice == null || desiredProfitMargin == null) {
+        return null;
+    }
+    
+    // suggestedPrice = costPrice * (1 + (desiredProfitMargin / 100))
+    BigDecimal marginMultiplier = BigDecimal.ONE.add(
+        desiredProfitMargin.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
+    );
+    return costPrice.multiply(marginMultiplier).setScale(2, RoundingMode.HALF_UP);
+}
+
     /**
      * Finds a Product entity by its ID. This method is intended for internal use
      * by other services that need the raw entity.
