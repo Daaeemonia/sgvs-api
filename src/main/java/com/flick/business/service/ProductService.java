@@ -104,16 +104,29 @@ public class ProductService {
         return new PageResponse<>(productPage.map(ProductResponse::fromEntity));
     }
 
-    public BigDecimal calculateSuggestedPrice(BigDecimal costPrice, BigDecimal desiredProfitMargin) {
+    public BigDecimal calculateSuggestedPrice(BigDecimal costPrice, 
+                                          BigDecimal desiredProfitMargin,
+                                          Integer inflationMonths) {
     if (costPrice == null || desiredProfitMargin == null) {
         return null;
     }
     
-    // suggestedPrice = costPrice * (1 + (desiredProfitMargin / 100))
+    // Preço base com margem
     BigDecimal marginMultiplier = BigDecimal.ONE.add(
         desiredProfitMargin.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
     );
-    return costPrice.multiply(marginMultiplier).setScale(2, RoundingMode.HALF_UP);
+    BigDecimal basePrice = costPrice.multiply(marginMultiplier);
+    
+    // Adiciona inflação se solicitado
+    if (inflationMonths != null && inflationMonths > 0) {
+        BigDecimal inflation = inflationService.getAccumulatedInflation(inflationMonths);
+        BigDecimal inflationMultiplier = BigDecimal.ONE.add(
+            inflation.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
+        );
+        basePrice = basePrice.multiply(inflationMultiplier);
+    }
+    
+    return basePrice.setScale(2, RoundingMode.HALF_UP);
 }
 
     /**
