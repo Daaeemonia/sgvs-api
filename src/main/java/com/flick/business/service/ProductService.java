@@ -104,29 +104,30 @@ public class ProductService {
         return new PageResponse<>(productPage.map(ProductResponse::fromEntity));
     }
 
-    public BigDecimal calculateSuggestedPrice(BigDecimal costPrice, 
-                                          BigDecimal desiredProfitMargin,
-                                          Integer inflationMonths) {
+public BigDecimal calculateSuggestedPriceWithInflation(
+        BigDecimal costPrice, 
+        BigDecimal desiredProfitMargin,
+        Integer inflationMonths,
+        String inflationIndex) {
+    
     if (costPrice == null || desiredProfitMargin == null) {
         return null;
     }
     
-    // Preço base com margem
-    BigDecimal marginMultiplier = BigDecimal.ONE.add(
-        desiredProfitMargin.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
+    return inflationService.calculatePriceWithInflation(
+        costPrice, 
+        desiredProfitMargin,
+        inflationMonths,
+        inflationIndex != null ? inflationIndex : "IPCA"
     );
-    BigDecimal basePrice = costPrice.multiply(marginMultiplier);
+}
+
+public BigDecimal calculateSuggestedPrice(
+        BigDecimal costPrice, 
+        BigDecimal desiredProfitMargin) {
     
-    // Adiciona inflação se solicitado
-    if (inflationMonths != null && inflationMonths > 0) {
-        BigDecimal inflation = inflationService.getAccumulatedInflation(inflationMonths);
-        BigDecimal inflationMultiplier = BigDecimal.ONE.add(
-            inflation.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
-        );
-        basePrice = basePrice.multiply(inflationMultiplier);
-    }
-    
-    return basePrice.setScale(2, RoundingMode.HALF_UP);
+    return calculateSuggestedPriceWithInflation(
+        costPrice, desiredProfitMargin, null, null);
 }
 
     /**
