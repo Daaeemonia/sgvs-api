@@ -41,6 +41,10 @@ public class Product {
     @Column(name = "minimum_stock")
     private Integer minimumStock;
 
+    @Column(name = "desired_profit_margin")
+    private BigDecimal desiredProfitMargin;
+
+
     @Enumerated(EnumType.STRING)
     @Column(name = "unit_of_sale", nullable = false)
     private UnitOfSale unitOfSale;
