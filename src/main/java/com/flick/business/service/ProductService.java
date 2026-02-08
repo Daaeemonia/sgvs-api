@@ -34,6 +34,7 @@ public class ProductService {
     private final CategoryService categoryService;
     private final ProviderService providerService;
     private final SaleItemRepository saleItemRepository;
+    private final InflationService inflationService;  // ← LINHA ADICIONADA
 
     @Transactional(readOnly = true)
     public List<ProductResponse> getSuggestions() {
@@ -104,31 +105,37 @@ public class ProductService {
         return new PageResponse<>(productPage.map(ProductResponse::fromEntity));
     }
 
-public BigDecimal calculateSuggestedPriceWithInflation(
-        BigDecimal costPrice, 
-        BigDecimal desiredProfitMargin,
-        Integer inflationMonths,
-        String inflationIndex) {
-    
-    if (costPrice == null || desiredProfitMargin == null) {
-        return null;
+    public BigDecimal calculateSuggestedPriceWithInflation(
+            BigDecimal costPrice, 
+            BigDecimal desiredProfitMargin,
+            Integer inflationMonths,
+            String inflationIndex) {
+        
+        if (costPrice == null || desiredProfitMargin == null) {
+            return null;
+        }
+        
+        // Verifica se inflationService existe
+        if (inflationService == null) {
+            // Fallback: cálculo simples sem inflação
+            return costPrice.multiply(BigDecimal.ONE.add(desiredProfitMargin.divide(BigDecimal.valueOf(100))));
+        }
+        
+        return inflationService.calculatePriceWithInflation(
+            costPrice, 
+            desiredProfitMargin,
+            inflationMonths,
+            inflationIndex != null ? inflationIndex : "IPCA"
+        );
     }
-    
-    return inflationService.calculatePriceWithInflation(
-        costPrice, 
-        desiredProfitMargin,
-        inflationMonths,
-        inflationIndex != null ? inflationIndex : "IPCA"
-    );
-}
 
-public BigDecimal calculateSuggestedPrice(
-        BigDecimal costPrice, 
-        BigDecimal desiredProfitMargin) {
-    
-    return calculateSuggestedPriceWithInflation(
-        costPrice, desiredProfitMargin, null, null);
-}
+    public BigDecimal calculateSuggestedPrice(
+            BigDecimal costPrice, 
+            BigDecimal desiredProfitMargin) {
+        
+        return calculateSuggestedPriceWithInflation(
+            costPrice, desiredProfitMargin, null, null);
+    }
 
     /**
      * Finds a Product entity by its ID. This method is intended for internal use
@@ -204,5 +211,4 @@ public BigDecimal calculateSuggestedPrice(
             default -> Sort.by(Sort.Direction.ASC, "name"); // name_asc
         };
     }
-
 }
