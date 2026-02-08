@@ -1,4 +1,4 @@
-package com.flick.business.api.dto.response;
+package com.flick.business.api.dto.external.bcb;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
